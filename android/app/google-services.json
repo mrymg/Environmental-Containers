@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "224157277403",
+    "project_id": "evreka-de2c1",
+    "storage_bucket": "evreka-de2c1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224157277403:android:e410da33ca48a36e2ac0fe",
+        "android_client_info": {
+          "package_name": "com.example.evrka_case"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "224157277403-8j7b2v5pkhomrplv537rchqgr1lavssl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzOaR0D6Lg8_p6H0gz_rviycydmY18dD0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "224157277403-8j7b2v5pkhomrplv537rchqgr1lavssl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
