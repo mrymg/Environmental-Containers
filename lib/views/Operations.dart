@@ -1,11 +1,14 @@
-// ignore_for_file: file_names, prefer_const_constructors, prefer_final_fields, unused_field, unused_element
+// ignore_for_file: file_names, prefer_const_constructors, prefer_final_fields, unused_field, unused_element, unused_local_variable
 
 import 'dart:async';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:evrka_case/customWidgets/custDialog.dart';
 import 'package:evrka_case/customWidgets/custTextStyles.dart';
 import 'package:evrka_case/customWidgets/greenButton.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:maps_launcher/maps_launcher.dart';
@@ -32,6 +35,9 @@ class _OperationsState extends State<Operations> {
   String nextCollection = "";
   String fullnessRate = "";
   late MarkerId selectedMarker;
+  LatLng updatedLocation = LatLng(0, 0);
+
+  var db = FirebaseFirestore.instance.collection('Containers').get();
 
   int markerIdCounter = 060001;
   Future<void> _onMapCreated(GoogleMapController controller) async {
@@ -47,37 +53,55 @@ class _OperationsState extends State<Operations> {
 
     Map<MarkerId, Marker> markersList = <MarkerId, Marker>{};
 
-    for (var i = 1; i <= 1000; i++) {
-      final Random random = Random();
-      double latitude = minLat + (random.nextDouble() * (maxLat - minLat));
-      double longtitude = minLong + (random.nextDouble() * (maxLong - minLong));
+    // for (var i = 60001; i <= 61000; i++) {
+    // final Random random = Random();
+    // double latitude = minLat + (random.nextDouble() * (maxLat - minLat));
+    // double longtitude = minLong + (random.nextDouble() * (maxLong - minLong));
 
-      //onemli bir mevzu
-      MarkerId markerId = MarkerId(markerIdCounter.toString());
-      markerIdCounter++;
+    // //onemli bir mevzu
+    // MarkerId markerId = MarkerId(markerIdCounter.toString());
+    // markerIdCounter++;
 
-      int containerFullness = random.nextInt(100);
-      DateTime nextCollectionDate =
-          DateTime.now().add(Duration(days: random.nextInt(5)));
-      myContainer container =
-          myContainer(markerId, containerFullness, nextCollectionDate);
-      containers[markerId] = container;
-      Marker marker = Marker(
-          markerId: markerId,
-          position: LatLng(latitude, longtitude),
-          icon: await BitmapDescriptor.fromAssetImage(
-              ImageConfiguration(size: Size(512, 512)),
-              "assets/images/greenPin.png"),
-          onTap: () {
-            _onMarkerTapped(markerId);
-          });
+    // int containerFullness = random.nextInt(100);
+    // DateTime nextCollectionDate =
+    //     DateTime.now().add(Duration(days: random.nextInt(5)));
 
-      markersList[markerId] = marker;
-    }
-    setState(() {
-      markers = markersList;
-      print(markers);
-    });
+    // db.collection('Containers').doc('Container_${markerId.value}').set({
+    //   'name': markerId.value,
+    //   'latitude': latitude,
+    //   'longtitude': longtitude,
+    //   'fullness': containerFullness,
+    //   'nextCollection': nextCollectionDate
+    // }).whenComplete(() => print(" eklendi"));
+    var snapshot = db.then((el) => {
+          el.docs.forEach((e) async {
+            final Random random = Random();
+            print(e);
+            print(e['latitude']);
+            int containerFullness = int.parse(e['fullness'].toString());
+            MarkerId markerId = MarkerId(e['name'].toString());
+            DateTime nextCollectionDate =
+                DateTime.now().add(Duration(days: random.nextInt(5)));
+            double latitude = e['latitude'];
+            double longtitude = e['longtitude'];
+            myContainer container =
+                myContainer(markerId, containerFullness, nextCollectionDate);
+            containers[markerId] = container;
+            Marker marker = Marker(
+                markerId: markerId,
+                position: LatLng(latitude, longtitude),
+                icon: await BitmapDescriptor.fromAssetImage(
+                    ImageConfiguration(size: Size(512, 512)),
+                    "assets/images/greenPin.png"),
+                onTap: () {
+                  _onMarkerTapped(markerId);
+                });
+            markersList[markerId] = marker;
+          }),
+          setState(() {
+            markers = markersList;
+          })
+        });
   }
 
   void _onMarkerTapped(MarkerId markerId) {
@@ -99,9 +123,12 @@ class _OperationsState extends State<Operations> {
       children: [
         GoogleMap(
             onMapCreated: _onMapCreated,
-            onLongPress: (LatLng) {
+            onLongPress: (LatLng loc) {
               if (isRelocationActive) {
-                relocate(LatLng, MarkerId(selectedMarkerId));
+                relocate(loc, MarkerId(selectedMarkerId));
+                setState(() {
+                  updatedLocation = loc;
+                });
               }
             },
             onTap: (LatLng pos) {
@@ -186,7 +213,7 @@ class _OperationsState extends State<Operations> {
                       ],
                     ),
                   ),
-                  hratio: 0.3,
+                  hratio: 0.33,
                 );
               } else if (isRelocationActive) {
                 return MapDialog(
@@ -202,7 +229,13 @@ class _OperationsState extends State<Operations> {
                           SizedBox(
                             height: 20,
                           ),
-                          GreenButton("SAVE", () => {updateLocation()}, 304.0)
+                          GreenButton(
+                              "SAVE",
+                              () => {
+                                    updateLocation(updatedLocation,
+                                        MarkerId(selectedMarkerId))
+                                  },
+                              304.0)
                         ],
                       ),
                     ),
@@ -247,12 +280,22 @@ class _OperationsState extends State<Operations> {
     });
   }
 
-  updateLocation() {
+  updateLocation(LatLng l, MarkerId id) {
+    var d = FirebaseFirestore.instance
+        .collection('Containers')
+        .doc('Container_${id.value}')
+        .update({'latitude': l.latitude, 'longtitude': l.longitude}).then((_) {
+      setState(() {
+        isRelocationConfirmed = true;
+      });
+    }).catchError((h) {
+      print(h);
+    });
+
     setState(() {
       isRelocationActive = false;
       isMarkerSelected = false;
       disableOutTapping = false;
-      isRelocationConfirmed = true;
     });
   }
 }
