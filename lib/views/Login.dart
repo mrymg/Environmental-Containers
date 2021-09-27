@@ -4,6 +4,7 @@ import 'package:evrka_case/customWidgets/greenButton.dart';
 import 'package:evrka_case/views/Operations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:evrka_case/customWidgets/custColors.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -64,7 +65,7 @@ class _LoginState extends State<Login> {
               SizedBox(
                 height: 50,
               ),
-              GreenButton("LOGIN", loginChecker)
+              GreenButton("LOGIN", loginChecker, 304.0)
             ],
           ),
         ),
