@@ -1,4 +1,4 @@
-# evrka_case
+# EVREKA CONTAINERS
 
 A new Flutter project.
 
